@@ -6,11 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.text.DecimalFormat;
 
 public class App {
 
@@ -34,8 +30,10 @@ public class App {
     private JTextField textFieldSolA;
     private JTextField textFieldSolB;
     private JLabel resLabel;
+    private JButton buttonSample;
+    private JCheckBox checkboxFormat;
 
-    public App() {
+    private App() {
         prepareGUI();
     }
 
@@ -45,7 +43,7 @@ public class App {
     }
 
     private void prepareGUI() {
-        mainFrame = new JFrame("App");
+        mainFrame = new JFrame("Otimizador de dieta");
         mainFrame.setContentPane(panelMain);
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.pack();
@@ -69,9 +67,11 @@ public class App {
 
         buttonClear.setActionCommand("Clear");
         buttonSubmit.setActionCommand("Submit");
+        buttonSample.setActionCommand("Sample");
 
         buttonClear.addActionListener(new ButtonClickListener());
         buttonSubmit.addActionListener(new ButtonClickListener());
+        buttonSample.addActionListener(new ButtonClickListener());
 
         resLabel.setText("Aguardando");
     }
@@ -100,33 +100,85 @@ public class App {
         resLabel.setText("Aguardando");
     }
 
+    private void putSample(){
+        textFieldMinFat.setText("24");
+        textFieldMinProtein.setText("4");
+        textFieldMinCarbs.setText("36");
+        textFieldMaxPortions.setText("5");
+
+        textFieldProteinA.setText("2");
+        textFieldCostA.setText("0,2");
+        textFieldFatA.setText("8");
+        textFieldCarbsA.setText("12");
+
+        textFieldFatB.setText("12");
+        textFieldProteinB.setText("1");
+        textFieldCostB.setText("0,3");
+        textFieldCarbsB.setText("12");
+    }
+
+    private String formatNumber(double number) {
+        if (checkboxFormat.isSelected()){
+            DecimalFormat df = new DecimalFormat("0.00");
+            return df.format(number);
+        } else{
+            return number + "";
+        }
+    }
+
+    /**
+     * Obtém os valores do formulário, constroi os modelos do problema, envia para o resolvedor e mostra a solução na interface de usuário.
+     */
     private void tryOptimize(){
         try {
-            if (textFieldMinFat.getText().trim().isEmpty()) {
+            if (textFieldMinFat.getText().trim().isEmpty()
+                    || textFieldMinProtein.getText().trim().isEmpty()
+                    || textFieldMinCarbs.getText().trim().isEmpty()
+                    || textFieldMaxPortions.getText().trim().isEmpty()
+                    || textFieldProteinA.getText().trim().isEmpty()
+                    || textFieldCostA.getText().trim().isEmpty()
+                    || textFieldFatA.getText().trim().isEmpty()
+                    || textFieldCarbsA.getText().trim().isEmpty()
+                    || textFieldFatB.getText().trim().isEmpty()
+                    || textFieldProteinB.getText().trim().isEmpty()
+                    || textFieldCostB.getText().trim().isEmpty()
+                    || textFieldCarbsB.getText().trim().isEmpty()) {
                 resLabel.setForeground(Color.red);
                 resLabel.setText("Preencha todos os campos");
             } else {
-                Diet diet = new Diet(Double.valueOf(textFieldMinFat.getText()), Double.valueOf(textFieldMinCarbs.getText()), Double.valueOf(textFieldMinProtein.getText()), Double.valueOf(textFieldMaxPortions.getText()));
-                Product pA = new Product(Double.valueOf(textFieldCostA.getText()), Double.valueOf(textFieldFatA.getText()), Double.valueOf(textFieldCarbsA.getText()), Double.valueOf(textFieldProteinA.getText()));
-                Product pB = new Product(Double.valueOf(textFieldCostB.getText()), Double.valueOf(textFieldFatB.getText()), Double.valueOf(textFieldCarbsB.getText()), Double.valueOf(textFieldProteinB.getText()));
+                Diet diet = new Diet(
+                        Double.valueOf(textFieldMinFat.getText().replace(",", ".")),
+                        Double.valueOf(textFieldMinCarbs.getText().replace(",", ".")),
+                        Double.valueOf(textFieldMinProtein.getText().replace(",", ".")),
+                        Double.valueOf(textFieldMaxPortions.getText().replace(",", ".")));
+                Product pA = new Product(
+                        Double.valueOf(textFieldCostA.getText().replace(",", ".")),
+                        Double.valueOf(textFieldFatA.getText()),
+                        Double.valueOf(textFieldCarbsA.getText()),
+                        Double.valueOf(textFieldProteinA.getText()));
+                Product pB = new Product(
+                        Double.valueOf(textFieldCostB.getText().replace(",", ".")),
+                        Double.valueOf(textFieldFatB.getText().replace(",", ".")),
+                        Double.valueOf(textFieldCarbsB.getText().replace(",", ".")),
+                        Double.valueOf(textFieldProteinB.getText().replace(",", ".")));
 
                 resLabel.setForeground(Color.black);
                 resLabel.setText("Otimizando...");
 
                 OptimizedDiet optimizedDiet = Solver.doMath(diet, pA, pB);
 
-                textFieldSolA.setText(optimizedDiet.amountOfPorduct1 + "");
-                textFieldSolB.setText(optimizedDiet.amountOfPorduct2 + "");
-                textFieldSolFunction.setText(optimizedDiet.totalCost + "");
+                textFieldSolA.setText(formatNumber(optimizedDiet.amountOfPorduct1));
+                textFieldSolB.setText(formatNumber(optimizedDiet.amountOfPorduct2));
+                textFieldSolFunction.setText(formatNumber(optimizedDiet.totalCost));
 
                 resLabel.setText("Otimização completa");
             }
         } catch (NumberFormatException ex) {
             resLabel.setForeground(Color.red);
-            resLabel.setText("Preencha os campos corretamente. Utilize \".\" como separador decimal. Não utilize vírgula.");
+            resLabel.setText("Preencha os campos corretamente.");
         } catch (JOptimizerException e) {
             resLabel.setForeground(Color.red);
-            resLabel.setText("Ocorreu um erro ao otimizar a função.");
+            resLabel.setText("Não foi possível calcular a solução ótima.");
         }
     }
 
@@ -135,10 +187,16 @@ public class App {
         @Override
         public void actionPerformed(ActionEvent e) {
             String command = e.getActionCommand();
-            if (command.equals("Clear")) {
-                clearAll();
-            } else if (command.equals("Submit")) {
-                tryOptimize();
+            switch (command) {
+                case "Clear":
+                    clearAll();
+                    break;
+                case "Submit":
+                    tryOptimize();
+                    break;
+                case "Sample":
+                    putSample();
+                    break;
             }
         }
     }

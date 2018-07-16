@@ -1,14 +1,14 @@
 package br.jorge.codebind;
 
-public class Diet {
+class Diet {
 
-    public double minimumFat;
-    public double minimumCarbs;
-    public double minimumProtein;
+    double minimumFat;
+    double minimumCarbs;
+    double minimumProtein;
 
-    public double maxPortions;
+    double maxPortions;
 
-    public Diet(double minimumFat, double minimumCarbs, double minimumProtein, double maxPortions) {
+    Diet(double minimumFat, double minimumCarbs, double minimumProtein, double maxPortions) {
         this.minimumFat = minimumFat;
         this.minimumCarbs = minimumCarbs;
         this.minimumProtein = minimumProtein;

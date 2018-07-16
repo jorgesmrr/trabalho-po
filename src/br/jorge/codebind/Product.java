@@ -1,13 +1,13 @@
 package br.jorge.codebind;
 
-public class Product {
-    public double cost;
+class Product {
+    double cost;
 
-    public double fat;
-    public double carbs;
-    public double protein;
+    double fat;
+    double carbs;
+    double protein;
 
-    public Product(double cost, double fat, double carbs, double protein) {
+    Product(double cost, double fat, double carbs, double protein) {
         this.cost = cost;
         this.fat = fat;
         this.carbs = carbs;
